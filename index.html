@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ButcherBlock.Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Stick+No+Bills:wght@300;400;500;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --text: #e8e4dc;
+    --text-muted: #6b6b6b;
+    --text-dim: #3a3a3a;
+    --accent: #FF6129;
+    --sidebar-w: 360px;
+    --gap: 3px;
+    --gh: https://raw.githubusercontent.com/jlahham/ButchBlockStudio/main;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed; top: 0; left: 0;
+    width: var(--sidebar-w); height: 100vh;
+    background: var(--bg); display: flex; flex-direction: column;
+    padding: 36px 36px 28px; z-index: 100;
+    border-right: 0.5px solid #1e1e1e; overflow-y: auto;
+  }
+
+  .logo {
+    font-family: 'Stick No Bills', sans-serif; font-weight: 700;
+    text-transform: uppercase; color: var(--text); line-height: 1.0;
+    margin-bottom: 44px; cursor: pointer; display: flex; flex-direction: column;
+  }
+  .logo-top    { font-size: 32px; letter-spacing: 0.06em; display: block; }
+  .logo-bottom { font-size: 32px; letter-spacing: 0.52em; display: block; text-transform: lowercase; }
+
+  .sidebar-section-label {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px;
+  }
+
+  .filter-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .filter-list li {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 400;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);
+    cursor: pointer; padding: 4px 0; transition: color 0.2s; user-select: none;
+  }
+  .filter-list li:hover { color: var(--text); }
+  .filter-list li.active { color: var(--accent); font-weight: 600; }
+  .filter-list li.clear-all { font-size: 10px; color: var(--text-dim); margin-top: 10px; letter-spacing: 0.2em; }
+  .filter-list li.clear-all:hover { color: var(--text-muted); }
+
+  .sidebar-spacer { flex: 1; }
+
+  .about-trigger {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted);
+    cursor: pointer; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+  }
+  .about-trigger:hover { color: var(--text); }
+  .about-trigger.open  { color: var(--accent); }
+  .about-arrow { display: inline-block; transition: transform 0.3s ease; font-size: 10px; }
+  .about-trigger.open .about-arrow { transform: rotate(180deg); }
+
+  #about-panel {
+    display: none; flex-direction: column; gap: 16px;
+    padding-bottom: 24px; border-bottom: 0.5px solid #1e1e1e;
+    margin-bottom: 24px; animation: fadeSlideIn 0.3s ease;
+  }
+  #about-panel.open { display: flex; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .about-photo {
+    width: 100%; aspect-ratio: 1; border-radius: 4px;
+    background: #1e1e1e; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .about-photo-placeholder {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
+    letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase;
+  }
+  .about-bio { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300; color: var(--text-muted); line-height: 1.7; }
+  .about-contacts { display: flex; flex-direction: column; gap: 6px; }
+  .about-contact-link {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim);
+    text-decoration: none; transition: color 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .about-contact-link:hover { color: var(--accent); }
+
+  .sidebar-footer { font-family: 'Outfit', sans-serif; font-size: 10px; color: var(--text-dim); letter-spacing: 0.06em; padding-top: 16px; }
+
+  /* ── MAIN ── */
+  #main { margin-left: var(--sidebar-w); min-height: 100vh; display: flex; flex-direction: column; }
+  #grid-wrapper { flex: 1; }
+
+  #grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--gap); padding: var(--gap); }
+
+  .tile {
+    position: relative; overflow: hidden; background: #111;
+    cursor: pointer; transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .tile.w12 { grid-column: span 12; }
+  .tile.w8  { grid-column: span 8; }
+  .tile.w7  { grid-column: span 7; }
+  .tile.w6  { grid-column: span 6; }
+  .tile.w5  { grid-column: span 5; }
+  .tile.w4  { grid-column: span 4; }
+  .tile.w3  { grid-column: span 3; }
+
+  .tile-inner { width: 100%; padding-bottom: 62%; position: relative; overflow: hidden; }
+  .tile.tall   .tile-inner { padding-bottom: 105%; }
+  .tile.xtall  .tile-inner { padding-bottom: 135%; }
+  .tile.short  .tile-inner { padding-bottom: 48%; }
+  .tile.xshort .tile-inner { padding-bottom: 34%; }
+
+  .tile-thumb {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .tile:hover .tile-thumb { transform: scale(1.04); }
+
+  .tile-scrim {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.08) 55%, transparent 100%);
+  }
+  .tile-play {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(255,255,255,0.10); border: 1.5px solid rgba(255,255,255,0.28);
+    display: flex; align-items: center; justify-content: center; z-index: 3;
+    transition: background 0.25s, transform 0.25s, border-color 0.25s;
+    backdrop-filter: blur(6px);
+  }
+  .tile-play svg { width: 15px; height: 15px; fill: #fff; margin-left: 3px; }
+  .tile:hover .tile-play { background: rgba(255,97,41,0.9); border-color: transparent; transform: translate(-50%,-50%) scale(1.12); }
+
+  .tile-label { position: absolute; bottom: 12px; left: 14px; z-index: 2; }
+  .tile-client { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(232,228,220,0.92); display: block; line-height: 1.3; }
+  .tile-title  { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(232,228,220,0.5); display: block; line-height: 1.3; }
+  .tile-cat { position: absolute; top: 11px; right: 11px; width: 6px; height: 6px; border-radius: 50%; z-index: 2; }
+  .tile-cat.client   { background: #e8e4dc; }
+  .tile-cat.personal { background: #7a8fa6; }
+
+  .tile.hidden { opacity: 0; pointer-events: none; position: absolute; visibility: hidden; }
+
+  /* ── LIGHTBOX (video) ── */
+  #lightbox {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.93); z-index: 500;
+    align-items: center; justify-content: center; animation: lbFadeIn 0.2s ease;
+  }
+  #lightbox.open { display: flex; }
+  @keyframes lbFadeIn { from { opacity:0; } to { opacity:1; } }
+
+  #lightbox-inner { position: relative; width: min(900px, 92vw); }
+  #lightbox-video-wrap { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 3px; background: #000; }
+  #lightbox-video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+  #lightbox-meta { margin-top: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+  #lightbox-title { font-family: 'Stick No Bills', sans-serif; font-size: 20px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); }
+  #lightbox-sub   { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+  #lightbox-close { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); cursor: pointer; padding: 4px 0; transition: color 0.2s; flex-shrink: 0; margin-left: 24px; }
+  #lightbox-close:hover { color: var(--accent); }
+
+  /* ── PRINT LIGHTBOX ── */
+  #print-lightbox {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.96); z-index: 500;
+    align-items: center; justify-content: center; animation: lbFadeIn 0.2s ease;
+    flex-direction: column; gap: 16px; padding: 24px;
+  }
+  #print-lightbox.open { display: flex; }
+  #print-lightbox img {
+    max-width: min(720px, 90vw); max-height: 80vh;
+    object-fit: contain; border-radius: 3px; display: block;
+  }
+  #print-lightbox-meta { display: flex; justify-content: space-between; align-items: center; width: min(720px, 90vw); }
+  #print-lightbox-title { font-family: 'Stick No Bills', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); }
+  #print-lightbox-close { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+  #print-lightbox-close:hover { color: var(--accent); }
+
+  /* ── PRINTS GALLERY ── */
+  #prints-gallery { display: none; flex-direction: column; gap: 0; }
+  #prints-gallery.visible { display: flex; }
+
+  .prints-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--gap);
+    padding: var(--gap);
+  }
+
+  .print-item {
+    position: relative; overflow: hidden;
+    cursor: pointer; background: #111;
+    aspect-ratio: 3/4;
+  }
+
+  .print-item img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .print-item:hover img { transform: scale(1.05); }
+
+  .print-scrim {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .print-item:hover .print-scrim { opacity: 1; }
+
+  .print-label {
+    position: absolute; bottom: 10px; left: 12px; z-index: 2;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .print-item:hover .print-label { opacity: 1; transform: translateY(0); }
+  .print-label span { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(232,228,220,0.9); }
+
+  .prints-sale-note {
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300;
+    color: var(--text-muted); text-align: center;
+    border-top: 0.5px solid #1e1e1e; padding: 20px 0 24px; margin: 0 var(--gap);
+  }
+
+  /* ── FOOTER ── */
+  footer { padding: 20px 24px; border-top: 0.5px solid #1e1e1e; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .footer-copy { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); }
+  .footer-links { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+  .footer-link { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .footer-link:hover { color: var(--accent); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    :root { --sidebar-w: 0px; }
+    #sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 0.5px solid #1e1e1e; padding: 20px 20px 16px; overflow-y: visible; }
+    .logo-top, .logo-bottom { font-size: 22px; }
+    .logo { margin-bottom: 0; }
+    .mobile-header { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .mobile-toggle { display: flex; flex-direction: column; gap: 4px; cursor: pointer; padding: 4px; }
+    .mobile-toggle span { display: block; width: 22px; height: 1px; background: var(--text-muted); }
+    #mobile-drawer { display: none; padding-top: 20px; }
+    #mobile-drawer.open { display: block; }
+    .mobile-row { border-top: 0.5px solid #1e1e1e; padding: 14px 0 10px; }
+    .sidebar-spacer { display: none; }
+    #main { margin-left: 0; }
+    #grid { grid-template-columns: 1fr; gap: 2px; padding: 2px; }
+    .tile.w12,.tile.w8,.tile.w7,.tile.w6,.tile.w5,.tile.w4,.tile.w3 { grid-column: span 1; }
+    .tile-inner { padding-bottom: 68% !important; }
+    .prints-grid { grid-template-columns: repeat(2, 1fr); }
+    #lightbox-inner { width: 96vw; }
+  }
+  @media (min-width: 769px) {
+    .mobile-header { display: contents; }
+    .mobile-toggle { display: none; }
+    #mobile-drawer { display: contents !important; }
+    .mobile-row { border: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── VIDEO LIGHTBOX ── -->
+<div id="lightbox" onclick="closeLightbox(event)">
+  <div id="lightbox-inner">
+    <div id="lightbox-video-wrap">
+      <iframe id="lightbox-iframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+    <div id="lightbox-meta">
+      <div>
+        <div id="lightbox-title"></div>
+        <div id="lightbox-sub"></div>
+      </div>
+      <div id="lightbox-close" onclick="closeLightboxDirect()">✕ Close</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRINT LIGHTBOX ── -->
+<div id="print-lightbox" onclick="closePrintLightbox(event)">
+  <img id="print-lightbox-img" src="" alt="">
+  <div id="print-lightbox-meta">
+    <div id="print-lightbox-title"></div>
+    <div id="print-lightbox-close" onclick="closePrintLightboxDirect()">✕ Close</div>
+  </div>
+</div>
+
+<!-- ── SIDEBAR ── -->
+<div id="sidebar">
+  <div class="mobile-header">
+    <div class="logo" onclick="setFilter('all',document.querySelector('[data-filter=all]'))">
+      <span class="logo-top">ButcherBlock</span>
+      <span class="logo-bottom" id="logo-studio">studio</span>
+    </div>
+    <div class="mobile-toggle" onclick="toggleMobileDrawer()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div id="mobile-drawer">
+    <div class="mobile-row">
+      <div class="about-trigger" id="about-trigger" onclick="toggleAbout()">
+        This is me <span class="about-arrow">▾</span>
+      </div>
+      <div id="about-panel">
+        <div class="about-photo"><div class="about-photo-placeholder">Photo</div></div>
+        <div class="about-bio">Animation director with a tactile, kinetic approach. Jamil's work lives at the intersection of hand-crafted texture and bold motion — from commercial campaigns to personal experiments and limited print editions.</div>
+        <div class="about-contacts">
+          <a class="about-contact-link" href="https://www.instagram.com/butcherblock.studio/" target="_blank">↗ Instagram</a>
+          <a class="about-contact-link" href="https://ca.linkedin.com/in/jlahham1981" target="_blank">↗ LinkedIn</a>
+          <a class="about-contact-link" href="https://www.youtube.com/@butcherblockstudio" target="_blank">↗ Youtube Channel</a>
+          <a class="about-contact-link" href="mailto:hello@butcherblock.studio">↗ Email</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-row">
+      <div class="sidebar-section-label">Filter</div>
+      <ul class="filter-list" id="filter-list">
+        <li class="active" data-filter="all"      onclick="setFilter('all',this)">All My Stuff</li>
+        <li data-filter="client"                  onclick="setFilter('client',this)">Client Work</li>
+        <li data-filter="personal"                onclick="setFilter('personal',this)">Passion Projects</li>
+        <li data-filter="prints"                  onclick="setFilter('prints',this)">Art Your Life</li>
+        <li class="clear-all"                     onclick="setFilter('all',document.querySelector('[data-filter=all]'))">Clear All</li>
+      </ul>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">© 2026 ButcherBlock.Studio</div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div id="main">
+
+  <!-- VIDEO GRID -->
+  <div id="grid-wrapper">
+    <div id="grid">
+
+      <!-- PASSION PROJECTS -->
+      <div class="tile w7 tall" data-cat="personal" onclick="openLightbox('7e_BcWOWBIg','My Tiny Studio','Passion Project')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/7e_BcWOWBIg/maxresdefault.jpg" alt="My Tiny Studio" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat personal"></div>
+          <div class="tile-label"><span class="tile-client">Passion Project</span><span class="tile-title">My Tiny Studio</span></div>
+        </div>
+      </div>
+
+      <div class="tile w5 tall" data-cat="personal" onclick="openLightbox('ryZzbz8ashE','Zoe\'s Night Out','Passion Project')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/ryZzbz8ashE/maxresdefault.jpg" alt="Zoe's Night Out" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat personal"></div>
+          <div class="tile-label"><span class="tile-client">Passion Project</span><span class="tile-title">Zoe's Night Out</span></div>
+        </div>
+      </div>
+
+      <div class="tile w6" data-cat="personal" onclick="openLightbox('lCMr4HBe7s4','Rise and Shine','Passion Project')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/lCMr4HBe7s4/maxresdefault.jpg" alt="Rise and Shine" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat personal"></div>
+          <div class="tile-label"><span class="tile-client">Passion Project</span><span class="tile-title">Rise and Shine</span></div>
+        </div>
+      </div>
+
+      <div class="tile w6 short" data-cat="personal" onclick="openLightbox('_9AjUuzO0J8','To Heaven and Back','Passion Project')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/_9AjUuzO0J8/maxresdefault.jpg" alt="To Heaven and Back" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat personal"></div>
+          <div class="tile-label"><span class="tile-client">Passion Project</span><span class="tile-title">To Heaven and Back</span></div>
+        </div>
+      </div>
+
+      <div class="tile w4 xtall" data-cat="personal" onclick="openLightbox('C6OsM11GACg','Zeebz','Passion Project')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/C6OsM11GACg/maxresdefault.jpg" alt="Zeebz" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat personal"></div>
+          <div class="tile-label"><span class="tile-client">Passion Project</span><span class="tile-title">Zeebz</span></div>
+        </div>
+      </div>
+
+      <div class="tile w4 xtall" data-cat="personal" onclick="openLightbox('oa9WRQmq-6A','Snaquin','Passion Project')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/oa9WRQmq-6A/maxresdefault.jpg" alt="Snaquin" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat personal"></div>
+          <div class="tile-label"><span class="tile-client">Passion Project</span><span class="tile-title">Snaquin</span></div>
+        </div>
+      </div>
+
+      <div class="tile w4 xtall" data-cat="personal" onclick="openLightbox('y_RTPmzLxtk','From the Ashes','Passion Project')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/y_RTPmzLxtk/maxresdefault.jpg" alt="From the Ashes" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat personal"></div>
+          <div class="tile-label"><span class="tile-client">Passion Project</span><span class="tile-title">From the Ashes</span></div>
+        </div>
+      </div>
+
+      <!-- CLIENT WORK -->
+      <div class="tile w5 tall" data-cat="client" onclick="openLightbox('JQi9y4WlFmo','Unhungry','Client Work')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/JQi9y4WlFmo/maxresdefault.jpg" alt="Unhungry" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat client"></div>
+          <div class="tile-label"><span class="tile-client">Client Work</span><span class="tile-title">Unhungry</span></div>
+        </div>
+      </div>
+
+      <div class="tile w7" data-cat="client" onclick="openLightbox('M_xMaNkJFuI','Moonray — Falling Gods','Client Work')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/M_xMaNkJFuI/maxresdefault.jpg" alt="Moonray Falling Gods" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat client"></div>
+          <div class="tile-label"><span class="tile-client">Client Work</span><span class="tile-title">Moonray — Falling Gods</span></div>
+        </div>
+      </div>
+
+      <div class="tile w12 xshort" data-cat="client" onclick="openLightbox('Vkih6vPWirI','Moonray — Rouje Dances','Client Work')">
+        <div class="tile-inner">
+          <img class="tile-thumb" src="https://img.youtube.com/vi/Vkih6vPWirI/maxresdefault.jpg" alt="Moonray Rouje Dances" loading="lazy">
+          <div class="tile-scrim"></div>
+          <div class="tile-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tile-cat client"></div>
+          <div class="tile-label"><span class="tile-client">Client Work</span><span class="tile-title">Moonray — Rouje Dances</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PRINTS GALLERY -->
+  <div id="prints-gallery">
+    <div class="prints-grid" id="prints-grid"></div>
+    <div class="prints-sale-note">All prints are available for sale upon request.</div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-copy">© 2026 ButcherBlock.Studio</span>
+    <div class="footer-links">
+      <a class="footer-link" href="https://www.instagram.com/butcherblock.studio/" target="_blank">Instagram</a>
+      <a class="footer-link" href="https://ca.linkedin.com/in/jlahham1981" target="_blank">LinkedIn</a>
+      <a class="footer-link" href="https://www.youtube.com/@butcherblockstudio" target="_blank">Youtube Channel</a>
+      <a class="footer-link" href="mailto:hello@butcherblock.studio">Email</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  /* ── GITHUB BASE URL ── */
+  const GH = 'https://raw.githubusercontent.com/jlahham/ButchBlockStudio/main/';
+
+  /* ── PRINTS DATA ── */
+  const PRINTS = [
+    { file: 'PORTRAIT.gif',   label: 'Portrait'         },
+    { file: 'Port.jpg',       label: 'Port'             },
+    { file: 'red-01.jpg',     label: 'Red 01'           },
+    { file: 'red-02.jpg',     label: 'Red 02'           },
+    { file: 'NA-07.jpg',      label: 'NA 07'            },
+    { file: 'bal-03.jpg',     label: 'Bal 03'           },
+    { file: 'bal-02.jpg',     label: 'Bal 02'           },
+    { file: 'bal-01.jpg',     label: 'Bal 01'           },
+    { file: 'red-05.jpeg',    label: 'Red 05'           },
+    { file: 'red-04.jpeg',    label: 'Red 04'           },
+    { file: 'red-03.jpg',     label: 'Red 03'           },
+    { file: 'SK-04.jpeg',     label: 'SK 04'            },
+    { file: 'SK-03.jpeg',     label: 'SK 03'            },
+    { file: 'SK-02.jpeg',     label: 'SK 02'            },
+    { file: 'SK-01.jpeg',     label: 'SK 01'            },
+    { file: 'rouje-02.jpeg',  label: 'Rouje 02'         },
+    { file: 'rouje-01.jpeg',  label: 'Rouje 01'         },
+    { file: 'shiny-01.jpeg',  label: 'Shiny 01'         },
+    { file: 'shiny-02.jpeg',  label: 'Shiny 02'         },
+    { file: 'TH-03.jpeg',     label: 'TH 03'            },
+    { file: 'TH-02.jpeg',     label: 'TH 02'            },
+    { file: 'TH-01.jpeg',     label: 'TH 01'            },
+    { file: 'NA-05.jpeg',     label: 'NA 05'            },
+    { file: 'NA-06.jpeg',     label: 'NA 06'            },
+    { file: 'NA-01.jpeg',     label: 'NA 01'            },
+    { file: 'NA-02.jpeg',     label: 'NA 02'            },
+  ];
+
+  /* ── BUILD PRINTS GRID ── */
+  (function buildPrints() {
+    const grid = document.getElementById('prints-grid');
+    PRINTS.forEach(p => {
+      const url = GH + encodeURIComponent(p.file);
+      grid.innerHTML += `
+        <div class="print-item" onclick="openPrintLightbox('${url}','${p.label}')">
+          <img src="${url}" alt="${p.label}" loading="lazy">
+          <div class="print-scrim"></div>
+          <div class="print-label"><span>${p.label}</span></div>
+        </div>`;
+    });
+  })();
+
+  /* ── LOGO WIDTH MATCH ── */
+  function matchLogoWidths() {
+    const top = document.querySelector('.logo-top');
+    const bot = document.getElementById('logo-studio');
+    if (!top || !bot) return;
+    const target = top.getBoundingClientRect().width;
+    let lo = 0, hi = 2.5, mid, n = 0;
+    while (n++ < 50) {
+      mid = (lo + hi) / 2;
+      bot.style.letterSpacing = mid + 'em';
+      const w = bot.getBoundingClientRect().width;
+      if (Math.abs(w - target) < 0.5) break;
+      if (w < target) lo = mid; else hi = mid;
+    }
+  }
+  window.addEventListener('load', matchLogoWidths);
+  window.addEventListener('resize', matchLogoWidths);
+
+  /* ── VIDEO LIGHTBOX ── */
+  function openLightbox(videoId, title, sub) {
+    document.getElementById('lightbox-iframe').src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0';
+    document.getElementById('lightbox-title').textContent = title;
+    document.getElementById('lightbox-sub').textContent   = sub;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightboxDirect() {
+    document.getElementById('lightbox-iframe').src = '';
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeLightbox(e) {
+    if (e.target === document.getElementById('lightbox')) closeLightboxDirect();
+  }
+
+  /* ── PRINT LIGHTBOX ── */
+  function openPrintLightbox(url, title) {
+    document.getElementById('print-lightbox-img').src         = url;
+    document.getElementById('print-lightbox-title').textContent = title;
+    document.getElementById('print-lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePrintLightboxDirect() {
+    document.getElementById('print-lightbox-img').src = '';
+    document.getElementById('print-lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closePrintLightbox(e) {
+    if (e.target === document.getElementById('print-lightbox')) closePrintLightboxDirect();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeLightboxDirect(); closePrintLightboxDirect(); }
+  });
+
+  /* ── ABOUT TOGGLE ── */
+  function toggleAbout() {
+    document.getElementById('about-panel').classList.toggle('open');
+    document.getElementById('about-trigger').classList.toggle('open');
+  }
+
+  /* ── FILTER ── */
+  function setFilter(cat, el) {
+    document.querySelectorAll('#filter-list li').forEach(li => li.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    const gridWrapper   = document.getElementById('grid-wrapper');
+    const printsGallery = document.getElementById('prints-gallery');
+
+    if (cat === 'prints') {
+      gridWrapper.style.display = 'none';
+      printsGallery.classList.add('visible');
+      return;
+    }
+
+    gridWrapper.style.display = 'block';
+    printsGallery.classList.remove('visible');
+
+    const tiles = document.querySelectorAll('.tile[data-cat]');
+
+    if (cat === 'all') {
+      tiles.forEach(t => { t.classList.remove('hidden'); t.style.gridColumn = ''; });
+      return;
+    }
+
+    tiles.forEach(t => {
+      t.dataset.cat === cat ? t.classList.remove('hidden') : t.classList.add('hidden');
+    });
+
+    const visible = Array.from(tiles).filter(t => !t.classList.contains('hidden'));
+    const spans   = buildLayout(visible.length);
+    visible.forEach((t, i) => { t.style.gridColumn = 'span ' + (spans[i] || 6); });
+  }
+
+  function buildLayout(n) {
+    const out = []; let placed = 0;
+    while (placed < n) {
+      const left = n - placed;
+      if      (left === 1) { out.push(12);    placed += 1; }
+      else if (left === 2) { out.push(7, 5);  placed += 2; }
+      else                 { out.push(5,4,3); placed += 3; }
+    }
+    return out;
+  }
+
+  /* ── MOBILE DRAWER ── */
+  function toggleMobileDrawer() {
+    document.getElementById('mobile-drawer').classList.toggle('open');
+  }
+</script>
+</body>
+</html>
